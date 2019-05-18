@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import torch
-from torch import nn
 
 
 def mlp_jacobian(logits, h):

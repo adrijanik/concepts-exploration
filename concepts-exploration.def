@@ -14,10 +14,14 @@ Concepts Exploration - Experiments Environment
     apt -y install build-essential libssl-dev libffi-dev python3-dev
     apt -y install libsm6
     apt -y install python3-pip python3-tk
+    apt -y install r-base
     pip3 install numpy opencv-python pandas
     pip3 install --no-cache-dir torch torchvision matplotlib ipython
     pip3 install scikit-learn scikit-image pillow tensorflow
     pip3 install tiffile sklearn imutils gpustat
+    Rscript -e "install.packages('dplyr')"
+    Rscript -e "install.packages('reshape2')"
+    Rscript -e "install.packages('ggplot2')"
 
 %environment
 

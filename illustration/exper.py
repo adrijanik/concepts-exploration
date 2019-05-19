@@ -40,7 +40,6 @@ pd.DataFrame(np.hstack([iris.target.reshape([len(data), 1]), iris.data])).to_csv
 pd.DataFrame(model.xh.weight.detach().numpy()).to_csv("w1.csv", index=False)
 pd.DataFrame(model.xh.bias.detach().numpy()).to_csv("b1.csv", index=False)
 
-
 # evaluate the predictions on a large grid
 eval_pts = []
 grid = np.linspace(-3, 3, 100)
@@ -49,7 +48,6 @@ for i in range(len(grid)):
         x_cur = torch.Tensor([0, grid[i], grid[j], 0])
         _, p = model(x_cur)
         p = p.detach().numpy()
-        print(np.argmax(p))
         eval_pts.append({
             "x0": grid[i],
             "x1": grid[j],
@@ -60,6 +58,7 @@ for i in range(len(grid)):
 
 pd.DataFrame(eval_pts).to_csv("eval_pts.csv", index=False)
 
+# get the directional derivatives, evaluated along different standard basis
 J = all_jacobians(model, data)
 scores = []
 
@@ -70,7 +69,6 @@ for j in range(100):
     scores_cur["sample"] = np.arange(len(scores_cur))
     scores_cur["vej"] = j
     scores.append(scores_cur)
-
 
 scores = pd.concat(scores)
 scores.to_csv("scores.csv", index=False)

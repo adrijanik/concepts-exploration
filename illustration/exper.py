@@ -6,17 +6,21 @@ import torch.nn.functional as F
 import torch
 import numpy as np
 import pandas as pd
+import model as m
+import tcav
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 iris = datasets.load_iris()
-data = Iris(iris.data, iris.target)
+iris.data = (iris.data - iris.data.mean(axis=0)) / iris.data.std(axis=0)
 
-model = MLP()
+data = m.Iris(iris.data, iris.target)
+
+model = m.MLP()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 iterator = DataLoader(data, 32)
 
 for i in range(100):
-    model, loss = train(
+    model, loss = m.train(
         model,
         iterator,
         optimizer,
@@ -27,8 +31,11 @@ for i in range(100):
 
 # test jacobian function
 h, p = model(data[0][0])
-J = mlp_jacobian(p, h)
+J = tcav.mlp_jacobian(p, h)
 
-pd.DataFrame(out[0].detach().numpy()).to_csv("h.csv", index=False)
-pd.DataFrame(out[1].detach().numpy()).to_csv("p_hat.csv", index=False)
-pd.DataFrame(np.hstack([iris.target.reshape([n, 1]), iris.data])).to_csv("iris.csv", index=False)
+pd.DataFrame(h.detach().numpy()).to_csv("h.csv", index=False)
+pd.DataFrame(p.detach().numpy()).to_csv("p_hat.csv", index=False)
+pd.DataFrame(np.hstack([iris.target.reshape([len(data), 1]), iris.data])).to_csv("iris.csv", index=False)
+
+pd.DataFrame(model.xh.weight.detach().numpy()).to_csv("w1.csv", index=False)
+pd.DataFrame(model.xh.bias.detach().numpy()).to_csv("b1.csv", index=False)

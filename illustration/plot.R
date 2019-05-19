@@ -19,10 +19,7 @@ sigm <- function(x) {
   exp(-x) / (1 + exp(-x))
 }
 
-#' let's visualize this first logistic regression
-#' first just comparing the first and second dimensions of iris
-plot(iris$petal_length, iris$petal_width)
-
+#' Evaluate the logistic regression probabilities across the hidden layer units
 K <- nrow(w1)
 u_i <- seq(-3, 3, length.out = 100)
 u <- as.matrix(expand.grid(u_i, u_i))
@@ -40,7 +37,7 @@ for (k in seq_len(K)) {
 
 probs <- do.call(rbind, probs)
 
-#' Plot the concept scores for the first of these h's
+#' Plot the concept scores across first 5 h's
 scores <- read_csv("scores.csv")
 colnames(scores) <- c(paste0("class_", 0:2), "sample", "w_k")
 scores <- melt(scores, id.vars = c("sample", "w_k"), value.name = "score", variable.name = "logit")

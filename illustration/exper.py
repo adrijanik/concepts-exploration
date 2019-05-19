@@ -12,12 +12,12 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 iris = datasets.load_iris()
 iris.data = (iris.data - iris.data.mean(axis=0)) / iris.data.std(axis=0)
-
 data = m.Iris(iris.data, iris.target)
 
 model = MLP(n_H=100)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 iterator = DataLoader(data, 32)
+pd.DataFrame(np.hstack([iris.target.reshape([len(data), 1]), iris.data])).to_csv("iris.csv", index=False)
 
 for i in range(100):
     model, loss = train(
@@ -28,17 +28,6 @@ for i in range(100):
     )
     print(loss)
 
-
-# test jacobian function
-h, p = model(data[0][0])
-J = mlp_jacobian(p, h)
-
-pd.DataFrame(h.detach().numpy()).to_csv("h.csv", index=False)
-pd.DataFrame(p.detach().numpy()).to_csv("p_hat.csv", index=False)
-pd.DataFrame(np.hstack([iris.target.reshape([len(data), 1]), iris.data])).to_csv("iris.csv", index=False)
-
-pd.DataFrame(model.xh.weight.detach().numpy()).to_csv("w1.csv", index=False)
-pd.DataFrame(model.xh.bias.detach().numpy()).to_csv("b1.csv", index=False)
 
 # evaluate the predictions on a large grid
 eval_pts = []

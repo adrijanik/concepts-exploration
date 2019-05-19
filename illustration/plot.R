@@ -2,6 +2,7 @@
 
 library("tidyverse")
 library("reshape2")
+theme_set(theme_bw() + theme(panel.grid = element_blank()))
 
 #' read in data
 iris <- read_csv("iris.csv") %>%
@@ -12,16 +13,42 @@ w1 <- read_csv("w1.csv")
 colnames(w1) <- paste0("w_k", 1:ncol(w1))
 b1 <- read_csv("b1.csv") %>%.[[1]]
 
+sigm <- function(x) {
+  exp(-x) / (1 + exp(-x))
+}
+
 #' let's visualize this first logistic regression
 #' first just comparing the first and second dimensions of iris
-plot(iris$sepal_length, iris$sepal_width)
-for (k in seq_len(20)) {
-  plane_1 <- data.frame(
-    u = seq(-5, 5, length.out = 10)
+plot(iris$petal_length, iris$petal_width)
+
+K <- nrow(w1)
+u_i <- seq(-3, 3, length.out = 100)
+u <- as.matrix(expand.grid(u_i, u_i))
+u <- cbind(u, 0, 0)
+
+for (k in seq_len(K)) {
+  probs[[k]] <- data.frame(
+    w_k = k,
+    u = u,
+    p = sigm(u %*% t(as.matrix(w1[k, ])))
   )
-  plane_1$fu = - (b1[k] + w1[[k, 1]] * plane_1$u) / w1[[k, 2]]
-  lines(plane_1$u, plane_1$fu)
+  colnames(probs[[k]]) <- c("w_k", colnames(iris[, -1]), "p")
 }
+
+probs <- do.call(rbind, probs)
+
+ggplot(probs %>% filter(w_k < 10)) +
+  geom_point(
+    data = iris,
+    aes(x = sepal_length, y = sepal_width, col = class)
+  ) +
+  geom_tile(
+    aes(x = sepal_length, y = sepal_width, fill = p),
+    alpha = 0.5
+  ) +
+  scale_fill_gradient2(midpoint = 0.5) +
+  facet_wrap(~ w_k)
+
 
 #' now the parallel coordinates view
 miris <- iris %>%

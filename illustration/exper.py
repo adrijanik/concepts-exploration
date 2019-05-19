@@ -15,7 +15,7 @@ iris.data = (iris.data - iris.data.mean(axis=0)) / iris.data.std(axis=0)
 
 data = m.Iris(iris.data, iris.target)
 
-model = m.MLP()
+model = m.MLP(n_H=100)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 iterator = DataLoader(data, 32)
 

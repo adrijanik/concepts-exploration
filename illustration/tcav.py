@@ -28,6 +28,22 @@ def mlp_jacobian(logits, h):
 
     # https://discuss.pytorch.org/t/how-to-compute-jacobian-matrix-in-pytorch/14968
     for k in range(K):
-        jacobian[k, :] = torch.autograd.grad(logits[k], h, retain_graph=True)[0]
+        jacobian[k, :] = torch.autograd.grad(logits[k], h, logits[k], retain_graph=True)[0]
 
     return jacobian
+
+def all_jacobians(model, data):
+    n = len(data)
+    jacobians = []
+    for i in range(n):
+        h, p = model(data[i][0])
+        jacobians.append(mlp_jacobian(p, h))
+
+    return jacobians
+
+def concept_scores(jacobians, v):
+    S = []
+    for i in range(len(jacobians)):
+        S.append(np.dot(jacobians[i].numpy(), v))
+
+    return np.vstack(S)

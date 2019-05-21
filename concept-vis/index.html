@@ -8,17 +8,150 @@
 
 
 <title>Interactive Concepts Discovery</title>
+
+<style>
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0 4px;
+}
+
+/* Create two equal columns that sits next to each other */
+.column {
+  flex: 50%;
+  padding: 0 4px;
+}
+
+.column img {
+  margin-top: 8px;
+  vertical-align: middle;
+}
+</style>
+<style>
+/* Style the header */
+header {
+  background-color: #666;
+  padding: 1px;
+  text-align: center;
+  font-size: 25px;
+  color: white;
+}
+
+/* Create two columns/boxes that floats next to each other */
+nav {
+  float: left;
+  width: 5%;
+  height: 100vh; /* only for demonstration, should be removed */
+  background: #f1f1f1;
+  padding: 20px;
+}
+
+/* Style the list inside the menu */
+nav ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+col2 {
+  float: left;
+  padding: 25px;
+  width: 30%;
+  background-color: #f8f9f2;
+}
+
+col1 {
+  float: left;
+  padding: 20px;
+  width: 55%;
+  background-color: #f1f1f1;
+}
+
+col3 {
+  float: left;
+  padding: 20px;
+  width: 27.5%;
+  background-color: #f1f1f1;
+}
+
+col4 {
+  float: left;
+  padding: 20px;
+  width: 27.5%;
+  background-color: #f1f1f1;
+}
+
+/* Clear floats after the columns */
+section:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* Style the footer */
+footer {
+  background-color: #777;
+  padding: 10px;
+  text-align: center;
+  color: white;
+}
+
+/* Responsive layout - makes the two columns/boxes stack on top of each other instead of next to each other, on small screens */
+@media (max-width: 600px) {
+  nav, article {
+    width: 100%;
+    height: auto;
+  }
+}
+</style>
+
+<style>
+.grid {
+   display: grid;
+   grid-gap: 10px;
+   grid-template-columns: repeat(auto-fill, minmax(60px,1fr));
+   grid-auto-rows: 60px;
+}
+.imgs {
+   border-radius: 3px;
+   padding: 0.5em;
+   background-color: #808080;
+}
+</style>
 </head>
+
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark static-top">
+
+<header class="navbar-dark bg-dark static-top">
     <div class="container-fluid">
       <a class="navbar-brand" href="" >Interactive Concepts Discovery</a>
-    </div>
-  </nav>
+</div>
+</header>
 
+<nav>
 
-<div id="div_main" class="container-fluid"></div>
+<h5>Class to test:</h5>
+<form action="#" method="get">
+  <input type="checkbox" name="vehicle" value="Bike"> bike<br>
+  <input type="checkbox" name="vehicle" value="Car" checked="checked">car<br>
+  <input type="checkbox" name="vehicle" value="Ferry" checked="checked">ferry<br>
 
+  <input type="submit" value="Submit">
+</form>
+
+</nav>
+
+<col1 id="div_main"></col1>
+
+<col2 id="col2">
+</col2>
+
+<!--col3>
+Blablabla
+</col3>
+
+<col4>
+Blablabla
+</col4-->
 
 
 <script src="https://unpkg.com/bootstrap-table@1.14.2/dist/bootstrap-table.min.js"></script>

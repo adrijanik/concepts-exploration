@@ -13,13 +13,6 @@ var max_x = 5547.271176306559;
 var min_y = -2146.332386264602; 
 var max_y = 4272.263057522139;
 
-
-//var min_x = -16;
-//var max_x = 16;
-//var min_y = -16;
-//var max_y = 16;
-
-
 var scales = {
   "x": d3.scaleLinear()
     .domain([min_x, max_x])
@@ -32,6 +25,7 @@ var scales = {
 };
 
 var ratio = 0.6;
+
 
 var groups = ["heatmap", "points", "masks", "preds", "patches", "svg-quant", "table"]
 Svg.selectAll("g")
@@ -48,8 +42,6 @@ var points = Svg.select("#points"),
 /**
  * Add legend to the chart
  */
-
-
 
 var legend = Svg.select("#svg-quant");
 
@@ -77,7 +69,8 @@ var points = points.selectAll("circle")
     "r": 3,
     "fill": (d) => scales.color(d.iou),
     "stroke": "black",
-    "stroke-width": 1
+    "stroke-width": 1,
+    "id": (d) => d.id
   });
 
 
@@ -175,47 +168,117 @@ function handleClick(d, i) {
         .attr("stroke", "red")
         .attr("id", "#p" + "-" + i)
         .attr("marker-end", "url(#triangle)");
-     data.push([coords_o[0].toPrecision(4),coords_o[1].toPrecision(4)])
-     var tRows = t.selectAll('tr')
-       .data(data)
-       .enter()
-       .append('tr');
-    
-     tRows
-       .selectAll('td')
-       .data(function(d) {
-         return d3.values(d);
-       })
-       .enter()
-       .append('td')
-       .html(function(d) {
-         return d;
-       });
-
-
-  var selected = points_data.filter(
-    d => ratio*scales.x(min_x + (max_x - min_x)/2) <= ratio*scales.x(d.coords[0]) && ratio*scales.x(d.coords[0]) < coords[0] &&
-      scales.y(min_y + (max_y - min_y)/2) <= scales.y(d.coords[1]) && scales.y(d.coords[1]) < coords[1]
-  ).slice(0,8);
-
-
-  patch_sel = update_images(selected.map((d) => d.patch_path), 'patch',"es", 0);
-  patch_sel.exit();
+//     data.push([coords_o[0].toPrecision(4),coords_o[1].toPrecision(4)])
+//     var tRows = t.selectAll('tr')
+//       .data(data)
+//       .enter()
+//       .append('tr');
+//    
+//     tRows
+//       .selectAll('td')
+//       .data(function(d) {
+//         return d3.values(d);
+//       })
+//       .enter()
+//       .append('td')
+//       .html(function(d) {
+//         return d;
+//       });
 
  }
 
 function handleMouseOver(d, i) {  // Add interactivity
     var coords = d.coords;
+    var x1 =  ratio*scales.x(min_x + (max_x - min_x)/2);
+    var y1 = scales.y(min_y + (max_y - min_y)/2);
+    var x2 = ratio*scales.x(coords[0]);
+    var y2 = scales.y(coords[1]);
+    var x3 = (y1-y2)/(x1-x2);
+    var y3 = -1;
+    var mag = Math.sqrt(Math.pow(x3,2)+Math.pow(y3,2));
+    var len = 400/((mag == 0) ? 1 : mag);
+
+    var x4 = x1 + x3*len;
+    var y4 = y1 + y3*len;
     Svg.append("line")
-        .attr("x1",  ratio*scales.x(min_x + (max_x - min_x)/2))
-        .attr("y1", scales.y(min_y + (max_y - min_y)/2))
-        .attr("x2", ratio*scales.x(coords[0]))
-        .attr("y2", scales.y(coords[1]))
+        .attr("x1",  x1)
+        .attr("y1", y1)
+        .attr("x2", x2)
+        .attr("y2", y2)
 	.attr("coords",coords)
         .attr("stroke-width", 2)
         .attr("stroke", "black")
         .attr("id", "#t" + "-" + i)
         .attr("marker-end", "url(#triangle)");
+
+
+     Svg.append("line")
+        .attr("x1", -1*(x4-x1) + x1)
+        .attr("y1", -1*(y4-y1) + y1)
+        .attr("x2", x4)
+        .attr("y2", y4)
+	.attr("coords",coords)
+        .attr("stroke-width", 2)
+        .attr("stroke", "gray")
+        .style("stroke-dasharray", ("3, 3"))	
+        .attr("id", "#t_ort" + "-" + i);
+
+     var angle = Math.PI/16;
+
+     var right_x = x1 + Math.cos(angle)*(x2-x1)-Math.sin(angle)*(y2-y1);
+     var left_x = x1 + Math.cos(-1*angle)*(x2-x1)-Math.sin(-1*angle)*(y2-y1);
+     var right_y = y1 + Math.sin(angle)*(x2-x1)+Math.cos(angle)*(y2-y1);
+     var left_y = y1 + Math.sin(-1*angle)*(x2-x1)+Math.cos(-1*angle)*(y2-y1);
+
+     Svg.append("line")
+        .attr("x1", x1)
+        .attr("y1", y1)
+        .attr("x2", right_x)
+        .attr("y2", right_y)
+	.attr("coords",coords)
+        .attr("stroke-width", 2)
+        .attr("stroke", "gray")
+        .style("stroke-dasharray", ("3, 3"))	
+        .attr("id", "#t_ang" + "-" + i);
+ 
+     Svg.append("line")
+        .attr("x1", x1)
+        .attr("y1", y1)
+        .attr("x2", left_x)
+        .attr("y2", left_y)
+	.attr("coords",coords)
+        .attr("stroke-width", 2)
+        .attr("stroke", "gray")
+        .style("stroke-dasharray", ("3, 3"))	
+        .attr("id", "#t_ang2" + "-" + i);
+ 
+  var right_a = (y1 - right_y)/(x1 - right_x);
+  var right_b = y1 - right_a*x1;
+
+  var left_a = (y1 - left_y)/(x1 - left_x);
+  var left_b = y1 - left_a*x1;
+  var R_2 = Math.pow(left_x-x1,2)+Math.pow(left_y-y1,2);
+
+  var selected = points_data.filter(
+    d => Math.pow((ratio*scales.x(d.coords[0]) - x1),2) + Math.pow((scales.y(d.coords[1]) - y1),2) < R_2 && (
+         right_a * ratio*scales.x(d.coords[0]) + right_b >  scales.y(d.coords[1]) && left_a * ratio*scales.x(d.coords[0]) + left_b <= scales.y(d.coords[1]) && right_a < 0 && left_a < 0 && ratio*scales.x(d.coords[0]) > x1 && left_x < right_x ||
+         right_a * ratio*scales.x(d.coords[0]) + right_b <= scales.y(d.coords[1]) && left_a * ratio*scales.x(d.coords[0]) + left_b >  scales.y(d.coords[1]) && right_a > 0 && left_a > 0 && left_x < right_x ||
+         right_a * ratio*scales.x(d.coords[0]) + right_b <= scales.y(d.coords[1]) && left_a * ratio*scales.x(d.coords[0]) + left_b <= scales.y(d.coords[1]) && right_a < 0 && left_a > 0 && scales.y(d.coords[1]) > y1 && left_x > right_x || 
+         right_a * ratio*scales.x(d.coords[0]) + right_b >  scales.y(d.coords[1]) && left_a * ratio*scales.x(d.coords[0]) + left_b >  scales.y(d.coords[1]) && right_a < 0 && left_a > 0 && scales.y(d.coords[1]) < y1 && left_x < right_x || 
+         right_a * ratio*scales.x(d.coords[0]) + right_b >  scales.y(d.coords[1]) && left_a * ratio*scales.x(d.coords[0]) + left_b <= scales.y(d.coords[1]) && right_a > 0 && left_a > 0 && ratio*scales.x(d.coords[0]) > x1 && left_x > right_x ||
+         right_a * ratio*scales.x(d.coords[0]) + right_b <= scales.y(d.coords[1]) && left_a * ratio*scales.x(d.coords[0]) + left_b >  scales.y(d.coords[1]) && right_a < 0 && left_a < 0 && left_x > right_x ||
+         right_a * ratio*scales.x(d.coords[0]) + right_b <= scales.y(d.coords[1]) && left_a * ratio*scales.x(d.coords[0]) + left_b >  scales.y(d.coords[1]) && right_a > 0 && left_a < 0 && left_x < x1   || 
+         right_a * ratio*scales.x(d.coords[0]) + right_b >  scales.y(d.coords[1]) && left_a * ratio*scales.x(d.coords[0]) + left_b <= scales.y(d.coords[1]) && right_a > 0 && left_a < 0 && left_x > x1 )
+  );
+
+
+  var mapped = selected.map((k) => k.id);
+  Svg.selectAll("circle")
+  .attr("fill", (d) => (mapped.includes(d.id)) ? "black" : "white");
+
+  patch_sel = update_images(selected.map((d) => d.patch_path), 'patch',"es", 0);
+  patch_sel.exit();
+
 
 }
 
@@ -223,34 +286,43 @@ function handleMouseOver(d, i) {  // Add interactivity
 function handleMouseOut(d, i) {
       var element = document.getElementById("#t" + "-" + i);
       element.parentNode.removeChild(element);
+      var element = document.getElementById("#t_ort" + "-" + i);
+      element.parentNode.removeChild(element);
+      var element = document.getElementById("#t_ang" + "-" + i);
+      element.parentNode.removeChild(element);
+      var element = document.getElementById("#t_ang2" + "-" + i);
+      element.parentNode.removeChild(element);
+      var element = document.getElementById("grid");
+      element.parentNode.removeChild(element);
+
 }
 
 
 // On Click, we want to add data to the array and chart
 
-var t = d3.select('body').append("div").attr("class","table-responsive-sm").attr("style","width:400px;").append('table').attr("class","table");
-var data = [["1st-pc","2nd-pc"]];
- t.append('tr')
-   .selectAll('th')
-   .data(data[0])
-   .enter()
-   .append('th')
-   .text(function(d) {
-     return d;
-   });
-
- var tRows = t.selectAll('tr')
-   .data(data)
-   .enter()
-   .append('tr');
-
- tRows
-   .selectAll('td')
-   .data(function(d) {
-     return d3.values(d);
-   })
-   .enter()
-   .append('td')
-   .html(function(d) {
-     return d;
-   });
+//var t = d3.select('body').append("div").attr("class","table-responsive-sm").attr("style","width:400px;").append('table').attr("class","table");
+//var data = [["1st-pc","2nd-pc"]];
+// t.append('tr')
+//   .selectAll('th')
+//   .data(data[0])
+//   .enter()
+//   .append('th')
+//   .text(function(d) {
+//     return d;
+//   });
+//
+// var tRows = t.selectAll('tr')
+//   .data(data)
+//   .enter()
+//   .append('tr');
+//
+// tRows
+//   .selectAll('td')
+//   .data(function(d) {
+//     return d3.values(d);
+//   })
+//   .enter()
+//   .append('td')
+//   .html(function(d) {
+//     return d;
+//   });

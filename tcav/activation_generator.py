@@ -98,6 +98,7 @@ class ImageActivationGenerator(ActivationGeneratorBase):
 
   def get_examples_for_concept(self, concept):
     concept_dir = os.path.join(self.source_dir, concept)
+    print(concept_dir)
     img_paths = [os.path.join(concept_dir, d)
                  for d in tf.gfile.ListDirectory(concept_dir)]
     imgs = self.load_images_from_files(img_paths, self.max_examples,

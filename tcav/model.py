@@ -20,6 +20,8 @@ from abc import ABCMeta
 from abc import abstractmethod
 import numpy as np
 import tensorflow as tf
+from tensorflow.python.platform import gfile
+
 
 class ModelWrapper(object):
   """Simple wrapper of the for models with session object for TCAV.
@@ -63,6 +65,7 @@ class ModelWrapper(object):
     Returns:
       the gradient array.
     """
+ 
     return self.sess.run(self.bottlenecks_gradients[bottleneck_name], {
         self.bottlenecks_tensors[bottleneck_name]: acts,
         self.y_input: y
@@ -204,9 +207,9 @@ class PublicImageModelWrapper(ImageModelWrapper):
     graph = tf.get_default_graph()
     bn_endpoints = {}
     for op in graph.get_operations():
-      if op.name.startswith(scope+'/') and 'Concat' in op.type:
-        name = op.name.split('/')[1]
-        bn_endpoints[name] = op.outputs[0]
+      if op.name.startswith(scope+'/') and ('Concat' in op.type or 'Softmax' in op.type):
+       name = op.name.split('/')[1]
+       bn_endpoints[name] = op.outputs[0]
     return bn_endpoints
 
   # Load graph and import into graph used by our session
@@ -218,7 +221,12 @@ class PublicImageModelWrapper(ImageModelWrapper):
         'Scope "%s" already exists. Provide explicit scope names when '
         'importing multiple instances of the model.') % scope
 
-    graph_def = tf.GraphDef.FromString(tf.gfile.Open(saved_path).read())
+
+    with gfile.FastGFile(saved_path,'rb') as f:
+        graph_def = tf.GraphDef()
+    graph_def.ParseFromString(f.read())
+
+ #   graph_def = tf.GraphDef.FromString(tf.gfile.Open(saved_path).read())
 
     with tf.name_scope(scope) as sc:
       t_input, t_prep_input = PublicImageModelWrapper.create_input(
@@ -254,6 +262,11 @@ class GoolgeNetWrapper_public(PublicImageModelWrapper):
                                                   endpoints_v1,
                                                   scope='v1')
     self.model_name = 'GoogleNet_public'
+
+  def get_tensor(self):
+      return self.bottlenecks_tensors.keys()
+
+
 
   def adjust_prediction(self, pred_t):
     # Each pred outputs 16, 1008 matrix. The prediction value is the first row.

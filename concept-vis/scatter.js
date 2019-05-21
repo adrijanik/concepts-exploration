@@ -24,7 +24,7 @@ var scales = {
     .domain([0, 1])
 };
 
-var ratio = 0.6;
+var ratio = 1;
 
 
 var groups = ["heatmap", "points", "masks", "preds", "patches", "svg-quant", "table"]

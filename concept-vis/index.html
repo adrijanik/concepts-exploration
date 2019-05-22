@@ -40,9 +40,9 @@ header {
 /* Create two columns/boxes that floats next to each other */
 nav {
   float: left;
-  width: 5%;
+  width: 15%;
   height: 100vh; /* only for demonstration, should be removed */
-  background: #f1f1f1;
+  background: #fafafa;
   padding: 20px;
 }
 
@@ -56,14 +56,14 @@ col2 {
   float: left;
   padding: 25px;
   width: 30%;
-  background-color: #f8f9f2;
+  background-color: #ffffff;
 }
 
 col1 {
   float: left;
   padding: 20px;
   width: 55%;
-  background-color: #f1f1f1;
+  background-color: #ffffff;
 }
 
 col3 {
@@ -108,13 +108,50 @@ footer {
 .grid {
    display: grid;
    grid-gap: 10px;
-   grid-template-columns: repeat(auto-fill, minmax(60px,1fr));
-   grid-auto-rows: 60px;
+   grid-template-columns: repeat(auto-fill, minmax(64px,1fr));
+   grid-auto-rows: 64px;
 }
 .imgs {
    border-radius: 3px;
    padding: 0.5em;
    background-color: #808080;
+}
+</style>
+<style>
+#myInput {
+  background-image: url('/css/searchicon.png');
+  background-position: 10px 10px;
+  background-repeat: no-repeat;
+  width: 100%;
+  font-size: 16px;
+  padding: 12px 20px 12px 40px;
+  border: 1px solid #ddd;
+  margin-bottom: 12px;
+}
+
+#checklist {
+  border-collapse: collapse;
+  width: 100%;
+  border: 1px solid #ddd;
+  font-size: 18px;
+}
+
+#checklist th, #checklist td {
+  text-align: left;
+  padding: 12px;
+}
+
+#checklist tr {
+  border-bottom: 1px solid #ddd;
+}
+
+#checklist tr.header, #checklist tr:hover {
+  background-color: #f1f1f1;
+}
+
+.scrollit {
+    overflow:scroll;
+    height:65vh;
 }
 </style>
 </head>
@@ -130,13 +167,20 @@ footer {
 <nav>
 
 <h5>Class to test:</h5>
-<form action="#" method="get">
-  <input type="checkbox" name="vehicle" value="Bike"> bike<br>
-  <input type="checkbox" name="vehicle" value="Car" checked="checked">car<br>
-  <input type="checkbox" name="vehicle" value="Ferry" checked="checked">ferry<br>
-
+<form action="#" method="get"> 
+<input type="text" id="myInput" onkeyup="search()" placeholder="Search for class.." title="Type class name...">
+<div class="scrollit">
+<table id="checklist">
+</table>
+</div>
   <input type="submit" value="Submit">
 </form>
+
+<div style="margin-top:30px;">
+  <input type="range" id="angle" name="angle"
+         min="1" max="15" onchange="updateAngle(this.value)">
+  <label for="angle">Angle [2-30]</label>
+</div>
 
 </nav>
 
@@ -152,6 +196,32 @@ Blablabla
 <col4>
 Blablabla
 </col4-->
+<p id="valBox" style="display:none;">15</p>
+<script>
+function search() {
+  var input, filter, table, tr, td, i, txtValue;
+  input = document.getElementById("myInput");
+  filter = input.value.toUpperCase();
+  table = document.getElementById("checklist");
+  tr = table.getElementsByTagName("tr");
+  for (i = 0; i < tr.length; i++) {
+    td = tr[i].getElementsByTagName("td")[0];
+    if (td) {
+      txtValue = td.textContent || td.innerText;
+      if (txtValue.toUpperCase().indexOf(filter) > -1) {
+        tr[i].style.display = "";
+      } else {
+        tr[i].style.display = "none";
+      }
+    }       
+  }
+}
+</script>
+<script>
+function updateAngle(newVal){
+  document.getElementById("valBox").innerHTML=newVal;
+}
+</script>
 
 
 <script src="https://unpkg.com/bootstrap-table@1.14.2/dist/bootstrap-table.min.js"></script>

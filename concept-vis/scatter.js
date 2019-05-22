@@ -8,10 +8,12 @@ var Svg = d3.select("#div_main")
   .attr("id", "svg")
   .attr("height", 1000)
 
-var min_x = -3724.8286437539355;
-var max_x = 5547.271176306559;
-var min_y = -2146.332386264602; 
-var max_y = 4272.263057522139;
+
+var min_x = -1456.081120128465;
+var max_x = 3099.9024827509324;
+var min_y = -2143.8015920408943;
+var max_y = 2118.079045467571;
+
 
 var scales = {
   "x": d3.scaleLinear()
@@ -58,6 +60,20 @@ var legendLinear = d3.legendColor()
 
 legend.select(".legendLinear")
   .call(legendLinear);
+
+
+d3.json("/data/classes.json").then(function(data) {
+  var checklist = d3.select('#checklist').selectAll("input")
+    .data(data)
+    .enter()
+    .append('tr')
+    .append('td')
+    .append('label')
+        .text(function(d) { return d.class.split(',')[0]; })
+    .append("input")
+    .attrs({ "type":"checkbox", "name":(d) => d.id, "value":(d) => d.class});
+
+});
 
 // draw the scatterplot points
 var points = points.selectAll("circle")
@@ -223,7 +239,7 @@ function handleMouseOver(d, i) {  // Add interactivity
         .style("stroke-dasharray", ("3, 3"))	
         .attr("id", "#t_ort" + "-" + i);
 
-     var angle = Math.PI/16;
+     var angle =  document.getElementById("valBox").innerHTML * Math.PI/180;
 
      var right_x = x1 + Math.cos(angle)*(x2-x1)-Math.sin(angle)*(y2-y1);
      var left_x = x1 + Math.cos(-1*angle)*(x2-x1)-Math.sin(-1*angle)*(y2-y1);

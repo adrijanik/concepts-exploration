@@ -33,14 +33,14 @@ for (k in seq_len(K)) {
     u = u,
     p = sigm(u %*% w1[k, ])
   )
-  colnames(probs[[k]]) <- c("w_k", "X1", "X2", "p")
+  colnames(probs[[k]]) <- c("w_k", c("sepal_length", "sepal_width", "petal_length", "petal_width"), "p")
 }
 
 probs <- do.call(rbind, probs)
 
 #' Plot the concept scores across first 5 h's
 scores <- read_csv("scores.csv")
-colnames(scores) <- c(paste0("class_", 0:1), "sample", "w_k")
+colnames(scores) <- c(paste0("class_", 0:2), "sample", "w_k")
 scores <- melt(scores, id.vars = c("sample", "w_k"), value.name = "score", variable.name = "logit")
 
 concept_scores <- iris %>%
@@ -49,11 +49,11 @@ concept_scores <- iris %>%
 ggplot(concept_scores %>% filter(w_k < 5)) +
   geom_tile(
     data = probs %>% filter(w_k < 5),
-    aes(x = X1, y = X2, fill = p),
+    aes(x = sepal_width, y = petal_length, fill = p),
     alpha = 0.5
   ) +
   geom_point(
-    aes(x = X1, y = X2, size = abs(score), col = class),
+    aes(x = sepal_width, y = petal_length, col = score, shape = class)
   ) +
   scale_size(range = c(0.02, 2)) +
   scale_fill_gradient2(midpoint = 0.5, low = "white", high = "black") +
@@ -61,7 +61,7 @@ ggplot(concept_scores %>% filter(w_k < 5)) +
 
 #' The decision boundary, when we set the two unplotted variables to 0
 p_hat <- read_csv("eval_pts.csv")
-p_hat[, 1:2] <- exp(p_hat[, 1:2]) / rowSums(exp(p_hat[, 1:2]))
+p_hat[, 1:3] <- exp(p_hat[, 1:3]) / rowSums(exp(p_hat[, 1:3]))
 p_hat <- p_hat %>%
   melt(id.vars = c("x0", "x1"))
 

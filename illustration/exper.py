@@ -1,13 +1,12 @@
 #!/usr/bin/env python
-from sklearn import datasets
-import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
 from torch.utils.data import Dataset, DataLoader
-import torch.nn.functional as F
-import torch
+import model as m
 import numpy as np
 import pandas as pd
-import model as m
 import tcav
+import torch
+import torch.nn.functional as F
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # generate some data
@@ -17,36 +16,31 @@ y = np.zeros(n)
 circle_ix = x[:, 0] ** 2 + x[:, 1] ** 2 <= .5 ** 2
 y[circle_ix] = 1
 y[np.logical_not(circle_ix) * x[:, 1] > 0] = 2
-data = DF(x, y.astype(np.int64))
+data = m.DF(x, y.astype(np.int64))
 
 # fit a simple model
 H = 20
-model = MLP(n_H=H, p=2)
+model = m.MLP(n_H=H, p=2)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 iterator = DataLoader(data, 32)
 
 for i in range(80):
-    model, loss = train(
-        model,
-        iterator,
-        optimizer,
-        device
-    )
+    model, loss = m.train(model, iterator, optimizer, device)
     if i % 20 == 0:
         print(loss)
 
 # get the directional derivatives, evaluated along different standard basis
-J = all_jacobians(model, data)
+J = tcav.all_jacobians(model, data)
 vs = [np.eye(1, H, k).squeeze() for k in range(H)]
-scores = concepts_scores(J, vs)
+scores = tcav.concepts_scores(J, vs)
 scores.to_csv("scores.csv", index=False)
 
 # evaluate the predictions on a large grid
-eval_pts = eval_grid(model)
+eval_pts = m.eval_grid(model)
 pd.DataFrame(eval_pts).to_csv("eval_pts.csv", index=False)
 
 # compute concept activation in top eigenvector directions
-combined = combine_data(data, model)
+combined = tcav.combine_data(data, model)
 combined.to_csv("combined.csv", index=False)
 
 # write the parameters for reference
@@ -64,9 +58,8 @@ for j in range(2000):
     coefs /= np.sqrt(sum(coefs ** 2))
     vs.append(np.dot(v[:, :H], coefs))
 
-concepts_scores(J, vs).to_csv("scores_rand.csv", index=False)
+m.concepts_scores(J, vs).to_csv("scores_rand.csv", index=False)
 
-from sklearn.cluster import KMeans
 kmeans = KMeans(n_clusters=50).fit(x)
 
 # fix some direction
@@ -79,7 +72,7 @@ for k in range(50):
     for i in np.where(ix)[0]:
         cur_data.append(data[i])
 
-    J = all_jacobians(model, cur_data)
+    J = tcav.all_jacobians(model, cur_data)
     cur_scores = pd.DataFrame(concept_scores(J, v))
     cur_scores["sample"] = np.where(ix)[0]
     cur_scores["k"] = k

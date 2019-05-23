@@ -25,16 +25,11 @@ def mlp_jacobian(model, logits, h, y):
     """
     K = len(logits)
     jacobian = torch.zeros((K, len(h)))
-    for k in range(len(logit)):
-        y01 = y == k
-        jacobian[k, ] = torch.matmul(logits * (1 - logits), model.hy.weight)
-
-    jacobian2 = torch.zeros((K, len(h)))
     # https://discuss.pytorch.org/t/how-to-compute-jacobian-matrix-in-pytorch/14968
     for k in range(K):
-        jacobian2[k, :] = torch.autograd.grad(logits[k], h, retain_graph=True)[0]
+        jacobian[k, :] = torch.autograd.grad(logits[k], h, retain_graph=True)[0]
 
-    return jacobian2.detach()
+    return jacobian.detach()
 
 
 def all_jacobians(model, data):

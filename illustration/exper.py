@@ -14,7 +14,7 @@ iris = datasets.load_iris()
 iris.data = (iris.data - iris.data.mean(axis=0)) / iris.data.std(axis=0)
 data = m.Iris(iris.data, iris.target)
 # pd.DataFrame(np.hstack([iris.target.reshape([len(data), 1]), iris.data])).to_csv("iris.csv", index=False)
-H = 500
+H = 250
 
 model = MLP(n_H=H)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
@@ -65,9 +65,6 @@ scores = pd.concat(scores)
 scores.to_csv("scores.csv", index=False)
 
 # compute concept activation in top eigenvector directions
-stats["h"] = pd.DataFrame(stats["h"])
-stats["p"] = pd.DataFrame(stats["p"])
-
 pd.DataFrame(model.xh.weight.detach().numpy()).to_csv("w1.csv", index=False)
 h = [z.detach().numpy() for z in stats["h"]]
 h = pd.DataFrame(np.vstack(h)).to_csv("h.csv", index=False)
@@ -75,7 +72,7 @@ p = pd.concat([pd.DataFrame(z.detach().numpy()) for z in stats["p"]])
 
 # directional derivatives, on random directions in H dimensional space
 scores = []
-for j in range(10000):
+for j in range(2000):
     v = np.random.randn(H)
     v /= np.sqrt(sum(v ** 2))
     scores_cur = pd.DataFrame(concept_scores(J, v))

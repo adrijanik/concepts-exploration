@@ -96,11 +96,9 @@ ggplot(score_means) +
 
 library("locfdr")
 fdr_results <- score_means %>%
-  filter(class == "2") %>%
+  filter(class == "1") %>%
   .[["score"]] %>%
-  locfdr(nulltype=1)
+  locfdr(nulltype=2)
 
 names(fdr_results)
 sort(fdr_results$fdr, decreasing = FALSE)[1:10]
-
-example(lfdr)

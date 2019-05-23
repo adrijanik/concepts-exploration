@@ -2,7 +2,7 @@
 import torch
 
 
-def mlp_jacobian(logits, h):
+def mlp_jacobian(model, logits, h):
     """
     Returns Jacobian in 1-Layer MLP
 
@@ -24,22 +24,43 @@ def mlp_jacobian(logits, h):
     >>> J = mlp_jacobian(p, h)
     """
     K = len(logits)
-    jacobian = torch.zeros((K, len(h)))
+    x = h
+    x.detach()
+    logit = model.hy(x)
+    jacobian = torch.zeros((K, len(x)))
+    for k in range(len(logit)):
+        ek = torch.zeros(K)
+        ek[k] = 1
+        jacobian[k, ] = torch.matmul((ek - logit), model.hy.weight).detach()
 
-    # https://discuss.pytorch.org/t/how-to-compute-jacobian-matrix-in-pytorch/14968
-    for k in range(K):
-        jacobian[k, :] = torch.autograd.grad(logits[k], h, logits[k], retain_graph=True)[0]
-
+    # jacobian2 = torch.zeros((K, len(h)))
+    # # https://discuss.pytorch.org/t/how-to-compute-jacobian-matrix-in-pytorch/14968
+    # for k in range(K):
+    #     jacobian2[k, :] = torch.autograd.grad(logits[k], h, logits[k], retain_graph=True)[0]
     return jacobian
+
 
 def all_jacobians(model, data):
     n = len(data)
     jacobians = []
     for i in range(n):
-        h, p = model(data[i][0])
-        jacobians.append(mlp_jacobian(p, h))
+        h = model.xh(data[i][0])
+        p = model.hy(h)
+        jacobians.append(mlp_jacobian(model, p, h))
 
     return jacobians
+
+
+def collect_stats(model, data):
+    n = len(data)
+    stats = {"h": [], "p": []}
+    for i in range(n):
+        h, p = model(data[i][0])
+        stats["h"].append(h)
+        stats["p"].append(p)
+
+    return stats
+
 
 def concept_scores(jacobians, v):
     S = []

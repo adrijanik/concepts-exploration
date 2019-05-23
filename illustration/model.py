@@ -24,11 +24,11 @@ class MLP(nn.Module):
         self.hy = nn.Linear(n_H, K)
 
     def forward(self, x):
-        h = self.xh(x)
+        h = torch.relu(self.xh(x))
         return h, self.hy(h)
 
 
-class Iris(Dataset):
+class DF(Dataset):
     """
     Torch Dataset from Pandas
     """
@@ -75,7 +75,7 @@ def train(model, iterator, optimizer, device):
         x = x.to(device)
         y = y.to(device)
 
-        h, logits = model(x)
+        _, logits = model(x)
         loss = nn.CrossEntropyLoss()(logits, y)
 
         loss.backward()
@@ -83,3 +83,18 @@ def train(model, iterator, optimizer, device):
         epoch_loss += loss.item()
 
     return model, epoch_loss / len(iterator)
+
+
+def eval_grid(model, grid=None):
+    evaluations = []
+    if not grid:
+        grid = np.linspace(-1, 1, 100)
+
+    for i in range(len(grid)):
+        for j in range(len(grid)):
+            x_cur = torch.Tensor([grid[i], grid[j]])
+            _, p = model(x_cur)
+            p = p.detach().numpy()
+            evaluations.append({"x0": grid[i], "x1": grid[j], "p0": p[0], "p1": p[1], "p2": p[2]})
+
+    return evaluations

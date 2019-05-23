@@ -1,84 +1,81 @@
 #!/usr/bin/env python
-from sklearn import datasets
-import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
 from torch.utils.data import Dataset, DataLoader
-import torch.nn.functional as F
-import torch
+import model as m
 import numpy as np
 import pandas as pd
-import model as m
 import tcav
+import torch
+import torch.nn.functional as F
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-iris = datasets.load_iris()
-iris.data = (iris.data - iris.data.mean(axis=0)) / iris.data.std(axis=0)
-data = m.Iris(iris.data, iris.target)
-# pd.DataFrame(np.hstack([iris.target.reshape([len(data), 1]), iris.data])).to_csv("iris.csv", index=False)
-H = 250
+# generate some data
+n = 1000
+x = np.random.uniform(-1, 1, size=(n, 2))
+y = np.zeros(n)
+circle_ix = x[:, 0] ** 2 + x[:, 1] ** 2 <= .5 ** 2
+y[circle_ix] = 1
+y[np.logical_not(circle_ix) * x[:, 1] > 0] = 2
+data = m.DF(x, y.astype(np.int64))
 
-model = MLP(n_H=H)
+# fit a simple model
+H = 20
+model = m.MLP(n_H=H, p=2)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 iterator = DataLoader(data, 32)
 
-for i in range(1000):
-    model, loss = train(
-        model,
-        iterator,
-        optimizer,
-        device
-    )
-    if i % 100 == 0:
+for i in range(80):
+    model, loss = m.train(model, iterator, optimizer, device)
+    if i % 20 == 0:
         print(loss)
 
-
-# evaluate the predictions on a large grid
-eval_pts = []
-grid = np.linspace(-3, 3, 100)
-for i in range(len(grid)):
-    for j in range(len(grid)):
-        x_cur = torch.Tensor([0, grid[i], grid[j], 0])
-        _, p = model(x_cur)
-        p = p.detach().numpy()
-        eval_pts.append({
-            "x0": grid[i],
-            "x1": grid[j],
-            "p0": p[0],
-            "p1": p[1],
-        })
-
-pd.DataFrame(eval_pts).to_csv("eval_pts.csv", index=False)
-
 # get the directional derivatives, evaluated along different standard basis
-stats = collect_stats(model, data)
-J = all_jacobians(model, data)
-scores = []
-
-for j in range(H):
-    v = np.zeros(H)
-    v[j] = 1
-    scores_cur = pd.DataFrame(concept_scores(J, v))
-    scores_cur["sample"] = np.arange(len(scores_cur))
-    scores_cur["vej"] = j
-    scores.append(scores_cur)
-
-scores = pd.concat(scores)
+J = tcav.all_jacobians(model, data)
+vs = [np.eye(1, H, k).squeeze() for k in range(H)]
+scores = tcav.concepts_scores(J, vs)
 scores.to_csv("scores.csv", index=False)
 
+# evaluate the predictions on a large grid
+eval_pts = m.eval_grid(model)
+pd.DataFrame(eval_pts).to_csv("eval_pts.csv", index=False)
+
 # compute concept activation in top eigenvector directions
+combined = tcav.combine_data(data, model)
+combined.to_csv("combined.csv", index=False)
+
+# write the parameters for reference
 pd.DataFrame(model.xh.weight.detach().numpy()).to_csv("w1.csv", index=False)
-h = [z.detach().numpy() for z in stats["h"]]
-h = pd.DataFrame(np.vstack(h)).to_csv("h.csv", index=False)
-p = pd.concat([pd.DataFrame(z.detach().numpy()) for z in stats["p"]])
+pd.DataFrame(model.xh.bias.detach().numpy()).to_csv("b1.csv", index=False)
+pd.DataFrame(model.hy.weight.detach().numpy()).to_csv("w2.csv", index=False)
+pd.DataFrame(model.hy.bias.detach().numpy()).to_csv("b2.csv", index=False)
+
 
 # directional derivatives, on random directions in H dimensional space
-scores = []
+_, _, v = np.linalg.svd(combined.iloc[:, 6:].values)
+vs = []
 for j in range(2000):
-    v = np.random.randn(H)
-    v /= np.sqrt(sum(v ** 2))
-    scores_cur = pd.DataFrame(concept_scores(J, v))
-    scores_cur["sample"] = np.arange(len(scores_cur))
-    scores_cur["draw"] = j
-    scores.append(scores_cur)
+    coefs = np.random.normal(0, 1, H)
+    coefs /= np.sqrt(sum(coefs ** 2))
+    vs.append(np.dot(v[:, :H], coefs))
 
-scores = pd.concat(scores)
-scores.to_csv("scores_rand.csv", index=False)
+m.concepts_scores(J, vs).to_csv("scores_rand.csv", index=False)
+
+kmeans = KMeans(n_clusters=50).fit(x)
+
+# fix some direction
+v = np.eye(1, H, 0).squeeze()
+
+scores = []
+for k in range(50):
+    ix = kmeans.labels_ == k
+    cur_data = []
+    for i in np.where(ix)[0]:
+        cur_data.append(data[i])
+
+    J = tcav.all_jacobians(model, cur_data)
+    cur_scores = pd.DataFrame(concept_scores(J, v))
+    cur_scores["sample"] = np.where(ix)[0]
+    cur_scores["k"] = k
+    scores.append(cur_scores)
+
+pd.concat(scores).to_csv("scores_cluster.csv", index=False)

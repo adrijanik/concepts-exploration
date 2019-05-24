@@ -127,7 +127,7 @@ class ModelWrapper(object):
     Returns:
       Activations in the given layer.
     """
-    print("running examples in the model")
+    #print("running examples in the model")
     return self.sess.run(self.bottlenecks_tensors[bottleneck_name],
                          {self.ends['input']: examples})
 
@@ -263,7 +263,7 @@ class GoolgeNetWrapper_public(PublicImageModelWrapper):
                                                   endpoints_v1,
                                                   scope='v1')
     self.model_name = 'GoogleNet_public'
-    print("model initialized")
+    #print("model initialized")
 
   def get_tensor(self):
       return self.bottlenecks_tensors.keys()

@@ -1,18 +1,22 @@
 /**
  * Experiment with Interactive Concepts Discovery
  */
-// http://bl.ocks.org/WilliamQLiu/76ae20060e19bf42d774
 
 var Svg = d3.select("#div_main")
   .append("svg")
   .attr("id", "svg")
   .attr("height", 1000)
 
+var index = 100;
 
-var min_x = -1456.081120128465;
-var max_x = 3099.9024827509324;
-var min_y = -2143.8015920408943;
-var max_y = 2118.079045467571;
+var min_g0 = -2935.449393712765;
+var min_g1 = -765.6401511302116;
+var max_g0 = -2935.4493522859743;
+var max_g1 = -765.6401444491758;
+var min_x = -3054.9271780362033;
+var max_x = 1953.187179198643;
+var min_y = -2101.9897178164883;
+var max_y = 2556.7949219460525;
 
 
 var scales = {
@@ -23,7 +27,7 @@ var scales = {
     .domain([min_y, max_y])
     .range([30, 865]),
   "color": d3.scaleSequential(d3.interpolateRdBu)
-    .domain([0, 1])
+    .domain([0,1])
 };
 
 var ratio = 1;
@@ -51,6 +55,8 @@ legend.append("g")
   .attr("class", "legendLinear")
   .attr("transform", "translate(132,900)");
 
+const range = (start, stop, step = 1) => Array(Math.ceil((stop - start) / step)).fill(start).map((x, y) => x + y * step);
+
 var legendLinear = d3.legendColor()
   .shapeWidth(35)
   .shapeHeight(30)
@@ -71,7 +77,7 @@ d3.json("/data/classes.json").then(function(data) {
     .append('label')
         .text(function(d) { return d.class.split(',')[0]; })
     .append("input")
-    .attrs({ "type":"checkbox", "name":(d) => d.id, "value":(d) => d.class});
+    .attrs({ "type":"checkbox", "name":(d) => d.id, "value":(d) => d.class, "class":"check1"});
 
 });
 
@@ -82,15 +88,15 @@ var points = points.selectAll("circle")
   .append("circle")
   .attrs({
     "cy": (d) => scales.y(d.coords[1]),
-    "r": 3,
-    "fill": (d) => scales.color(d.iou),
+    "r": 4,
+    "fill": 'white',
     "stroke": "black",
     "stroke-width": 1,
     "id": (d) => d.id
   });
 
 
-// draw the background heatmap
+// draw the background
 var ux = [... new Set(hm_data.map((d) => d.coords[0]))],
     uy = [... new Set(hm_data.map((d) => d.coords[1]))];
 
@@ -101,7 +107,7 @@ var heatmap = heatmap.selectAll("rect")
     "y": (d) => scales.y(d.coords[1]),
     "height": scales.y(uy[1]) - scales.y(uy[0]),
     "fill": (d) => scales.color(d.iou),
-    "opacity": 0.7
+    "opacity": 0
   });
 
 
@@ -111,6 +117,27 @@ var values0 = points_data.map(function(dict){
 var values1 = points_data.map(function(dict){
   return dict['coords'][1];
 }); 
+
+
+function selectClass() {
+   	
+    var checkedValue = null; 
+    var inputElements = document.querySelectorAll('.check1');
+
+    for(var i=0; inputElements[i]; ++i){
+          if(inputElements[i].checked){
+               checkedValue = inputElements[i].value;
+               break;
+          }
+    }
+
+    Svg.selectAll("circle")
+    .filter(function(d) { return d.class == checkedValue })
+    .attr("fill", "gray" );
+
+
+    return false;
+}
 
 
 // A function that finishes to draw the chart for a specific device size.
@@ -173,10 +200,15 @@ d3.selectAll("rect")
 function handleClick(d, i) {
    var coords = d3.mouse(this);
    var coords_o = d.coords;
-   
+//    var x1 =  ratio*scales.x(min_x + (max_x - min_x)/2);
+//    var y1 = scales.y(min_y + (max_y - min_y)/2);
+   var x1 =  ratio*scales.x(0);
+   var y1 = scales.y(0);
+
+
     Svg.append("line")
-        .attr("x1",  ratio*scales.x(min_x + (max_x - min_x)/2))
-        .attr("y1", scales.y(min_y + (max_y - min_y)/2))
+        .attr("x1",  x1)
+        .attr("y1", y1)
         .attr("x2", coords[0])
         .attr("y2", coords[1])
 	.attr("coords", coords_o)
@@ -205,8 +237,11 @@ function handleClick(d, i) {
 
 function handleMouseOver(d, i) {  // Add interactivity
     var coords = d.coords;
-    var x1 =  ratio*scales.x(min_x + (max_x - min_x)/2);
-    var y1 = scales.y(min_y + (max_y - min_y)/2);
+//    var x1 =  ratio*scales.x(min_x + (max_x - min_x)/2);
+//    var y1 = scales.y(min_y + (max_y - min_y)/2);
+    var x1 =  ratio*scales.x(0);
+    var y1 = scales.y(0);
+
     var x2 = ratio*scales.x(coords[0]);
     var y2 = scales.y(coords[1]);
     var x3 = (y1-y2)/(x1-x2);
@@ -226,7 +261,6 @@ function handleMouseOver(d, i) {  // Add interactivity
         .attr("stroke", "black")
         .attr("id", "#t" + "-" + i)
         .attr("marker-end", "url(#triangle)");
-
 
      Svg.append("line")
         .attr("x1", -1*(x4-x1) + x1)
@@ -290,7 +324,28 @@ function handleMouseOver(d, i) {  // Add interactivity
 
   var mapped = selected.map((k) => k.id);
   Svg.selectAll("circle")
-  .attr("fill", (d) => (mapped.includes(d.id)) ? "black" : "white");
+  .filter(function(d) { return mapped.includes(d.id) })
+  .attr("fill", "black");
+
+   var checkedValue = null; 
+   var inputElements = document.querySelectorAll('.check1');
+
+   for(var i=0; inputElements[i]; ++i){
+         if(inputElements[i].checked){
+              checkedValue = inputElements[i].value;
+              break;
+         }
+   }
+
+  function stand(x, min, max) {
+    return (x-min)/(max-min);
+  }
+  
+  Svg.selectAll("circle")
+  .filter(function(d) { return d.class == checkedValue })
+  .attr("fill", (d) =>  scales.color(math.multiply([stand(d.coords[0],min_x, max_x),stand(d.coords[1],min_y, max_y)],[stand(d.gradient[0],min_g0, max_g0),stand(d.gradient[1],min_g1, max_g1)])))
+  .attr("r", 10); 
+
 
   patch_sel = update_images(selected.map((d) => d.patch_path), 'patch',"es", 0);
   patch_sel.exit();
@@ -311,10 +366,26 @@ function handleMouseOut(d, i) {
       var element = document.getElementById("grid");
       element.parentNode.removeChild(element);
 
+      var checkedValue = null; 
+      var inputElements = document.querySelectorAll('.check1');
+  
+      for(var i=0; inputElements[i]; ++i){
+            if(inputElements[i].checked){
+                 checkedValue = inputElements[i].value;
+                 break;
+            }
+      }
+
+
+      Svg.selectAll("circle")
+      .filter(function(d) { return d.class != checkedValue })
+      .attr("fill", "white")
+      .attr("r", 4);
+
 }
 
 
-// On Click, we want to add data to the array and chart
+// On Click add data to the array and chart
 
 //var t = d3.select('body').append("div").attr("class","table-responsive-sm").attr("style","width:400px;").append('table').attr("class","table");
 //var data = [["1st-pc","2nd-pc"]];

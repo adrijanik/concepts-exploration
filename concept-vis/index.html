@@ -167,7 +167,7 @@ footer {
 <nav>
 
 <h5>Class to test:</h5>
-<form action="#" method="get"> 
+<form onsubmit="return selectClass();"> 
 <input type="text" id="myInput" onkeyup="search()" placeholder="Search for class.." title="Type class name...">
 <div class="scrollit">
 <table id="checklist">
@@ -178,8 +178,8 @@ footer {
 
 <div style="margin-top:30px;">
   <input type="range" id="angle" name="angle"
-         min="1" max="15" onchange="updateAngle(this.value)">
-  <label for="angle">Angle [2-30]</label>
+         min="1" max="5" onchange="updateAngle(this.value)">
+  <label for="angle">Angle [2-10]</label>
 </div>
 
 </nav>
@@ -189,14 +189,7 @@ footer {
 <col2 id="col2">
 </col2>
 
-<!--col3>
-Blablabla
-</col3>
-
-<col4>
-Blablabla
-</col4-->
-<p id="valBox" style="display:none;">15</p>
+<p id="valBox" style="display:none;">3</p>
 <script>
 function search() {
   var input, filter, table, tr, td, i, txtValue;
@@ -223,7 +216,7 @@ function updateAngle(newVal){
 }
 </script>
 
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/5.10.3/math.min.js"></script>
 <script src="https://unpkg.com/bootstrap-table@1.14.2/dist/bootstrap-table.min.js"></script>
 <script src="https://d3js.org/d3.v5.min.js"></script>
 <script src="https://d3js.org/d3-selection-multi.v1.min.js"></script>

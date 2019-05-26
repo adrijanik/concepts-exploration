@@ -5,7 +5,7 @@
 
 function update_images(im_ids, name, plural, offset) {
   currentWidth = parseInt(d3.select('#div_main').style('width'), 10)
-  var initial = ratio*scales.x(Math.max.apply(null, values0)) + ((currentWidth  -  (ratio *currentWidth))/3 - 115)
+  var initial = scales.x(Math.max.apply(null, values0)) + ((currentWidth  -  (currentWidth))/3 - 115)
 
   var Grid = d3.select('#col2')
           .append('grid')

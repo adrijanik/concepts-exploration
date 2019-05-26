@@ -9,14 +9,15 @@ var Svg = d3.select("#div_main")
 
 var index = 100;
 
-var min_g0 = -2935.449393712765;
-var min_g1 = -765.6401511302116;
-var max_g0 = -2935.4493522859743;
-var max_g1 = -765.6401444491758;
-var min_x = -3054.9271780362033;
-var max_x = 1953.187179198643;
-var min_y = -2101.9897178164883;
-var max_y = 2556.7949219460525;
+var min_g0 = -1023.8494681160053;
+var min_g1 = 614.194913941902;
+var max_g0 = -1023.8494346499896;
+var max_g1 = 614.1949715553254;
+var min_x = -1963.62291075628;
+var max_x = 3634.062084389748;
+var min_y = -2026.1730663284877;
+var max_y = 2804.8306800789014;
+
 
 
 var scales = {
@@ -27,13 +28,12 @@ var scales = {
     .domain([min_y, max_y])
     .range([30, 865]),
   "color": d3.scaleSequential(d3.interpolateRdBu)
-    .domain([0,1])
+    .domain([-7691066.971433935, 10576951.857826188])
 };
 
-var ratio = 1;
 
 
-var groups = ["heatmap", "points", "masks", "preds", "patches", "svg-quant", "table"]
+var groups = ["points", "heatmap", "masks", "preds", "patches", "svg-quant", "table"]
 Svg.selectAll("g")
   .data(groups).enter()
   .append("g")
@@ -53,24 +53,57 @@ var legend = Svg.select("#svg-quant");
 
 legend.append("g")
   .attr("class", "legendLinear")
-  .attr("transform", "translate(132,900)");
+  .attr("transform", "translate(70,900)");
 
 const range = (start, stop, step = 1) => Array(Math.ceil((stop - start) / step)).fill(start).map((x, y) => x + y * step);
 
 var legendLinear = d3.legendColor()
-  .shapeWidth(35)
+  .shapeWidth(100)
   .shapeHeight(30)
-  .cells([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
+  .cells([-46e5, -30e5, -16e5,
+         -6e4,  14e5,  3e6,
+        44e5,  74e5, 11e6])
   .orient('horizontal')
   .scale(scales.color);
+
+var x_axis = d3.axisBottom().scale(scales.x);
+
+var xAxisTranslate = 865 + 10;
+
+Svg.append("g")
+   .attr("transform", "translate(50," + xAxisTranslate  +")")
+   .call(x_axis)
+
+
+
+var y_axis = d3.axisLeft().scale(scales.y);
+
+Svg.append("g")
+   .attr("transform", "translate(50, 10)")
+   .call(y_axis);
+
+// text label for the x axis
+Svg.append("text")             
+    .attr("transform",
+          "translate(" + 1200 + " ," + 
+                         (865 + 50) + ")")
+    .style("text-anchor", "middle")
+    .text("1st principal component");
+
+// text label for the y axis
+Svg.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("y", -5)
+    .attr("x",-150)
+    .attr("dy", "1em")
+    .style("text-anchor", "middle")
+    .text("2nd principal component");      
 
 legend.select(".legendLinear")
   .call(legendLinear);
 
-
-d3.json("/data/classes.json").then(function(data) {
   var checklist = d3.select('#checklist').selectAll("input")
-    .data(data)
+    .data(classes_short)
     .enter()
     .append('tr')
     .append('td')
@@ -79,7 +112,7 @@ d3.json("/data/classes.json").then(function(data) {
     .append("input")
     .attrs({ "type":"checkbox", "name":(d) => d.id, "value":(d) => d.class, "class":"check1"});
 
-});
+
 
 // draw the scatterplot points
 var points = points.selectAll("circle")
@@ -88,7 +121,7 @@ var points = points.selectAll("circle")
   .append("circle")
   .attrs({
     "cy": (d) => scales.y(d.coords[1]),
-    "r": 4,
+    "r": 1,
     "fill": 'white',
     "stroke": "black",
     "stroke-width": 1,
@@ -157,11 +190,11 @@ function drawChart() {
 
   // Update the X scale 
   scales["x"].range([ 50, currentWidth]);
-  heatmap.attrs({"x": (d) => ratio*scales.x(d.coords[0]),
-    "width": ratio*scales.x(ux[1]) - ratio*scales.x(ux[0])
+  heatmap.attrs({"x": (d) => scales.x(d.coords[0]),
+    "width": scales.x(ux[1]) - scales.x(ux[0])
   })
 
-  points.attrs({"cx": (d) => ratio*scales.x(d.coords[0])})
+  points.attrs({"cx": (d) => scales.x(d.coords[0])})
   // allows interactivity with points
   Svg.selectAll("line").remove()
 
@@ -200,9 +233,9 @@ d3.selectAll("rect")
 function handleClick(d, i) {
    var coords = d3.mouse(this);
    var coords_o = d.coords;
-//    var x1 =  ratio*scales.x(min_x + (max_x - min_x)/2);
+//    var x1 =  scales.x(min_x + (max_x - min_x)/2);
 //    var y1 = scales.y(min_y + (max_y - min_y)/2);
-   var x1 =  ratio*scales.x(0);
+   var x1 =  scales.x(0);
    var y1 = scales.y(0);
 
 
@@ -237,12 +270,12 @@ function handleClick(d, i) {
 
 function handleMouseOver(d, i) {  // Add interactivity
     var coords = d.coords;
-//    var x1 =  ratio*scales.x(min_x + (max_x - min_x)/2);
+//    var x1 =  scales.x(min_x + (max_x - min_x)/2);
 //    var y1 = scales.y(min_y + (max_y - min_y)/2);
-    var x1 =  ratio*scales.x(0);
+    var x1 =  scales.x(0);
     var y1 = scales.y(0);
 
-    var x2 = ratio*scales.x(coords[0]);
+    var x2 = scales.x(coords[0]);
     var y2 = scales.y(coords[1]);
     var x3 = (y1-y2)/(x1-x2);
     var y3 = -1;
@@ -257,7 +290,7 @@ function handleMouseOver(d, i) {  // Add interactivity
         .attr("x2", x2)
         .attr("y2", y2)
 	.attr("coords",coords)
-        .attr("stroke-width", 2)
+        .attr("stroke-width", 3)
         .attr("stroke", "black")
         .attr("id", "#t" + "-" + i)
         .attr("marker-end", "url(#triangle)");
@@ -268,9 +301,9 @@ function handleMouseOver(d, i) {  // Add interactivity
         .attr("x2", x4)
         .attr("y2", y4)
 	.attr("coords",coords)
-        .attr("stroke-width", 2)
-        .attr("stroke", "gray")
-        .style("stroke-dasharray", ("3, 3"))	
+        .attr("stroke-width", 3)
+        .attr("stroke", "red")
+        .style("stroke", ("3, 3"))	
         .attr("id", "#t_ort" + "-" + i);
 
      var angle =  document.getElementById("valBox").innerHTML * Math.PI/180;
@@ -286,9 +319,9 @@ function handleMouseOver(d, i) {  // Add interactivity
         .attr("x2", right_x)
         .attr("y2", right_y)
 	.attr("coords",coords)
-        .attr("stroke-width", 2)
-        .attr("stroke", "gray")
-        .style("stroke-dasharray", ("3, 3"))	
+        .attr("stroke-width", 3)
+        .attr("stroke", "red")
+        .style("stroke", ("3, 3"))	
         .attr("id", "#t_ang" + "-" + i);
  
      Svg.append("line")
@@ -297,9 +330,9 @@ function handleMouseOver(d, i) {  // Add interactivity
         .attr("x2", left_x)
         .attr("y2", left_y)
 	.attr("coords",coords)
-        .attr("stroke-width", 2)
-        .attr("stroke", "gray")
-        .style("stroke-dasharray", ("3, 3"))	
+        .attr("stroke-width", 3)
+        .attr("stroke", "red")
+        .style("stroke", ("3, 3"))	
         .attr("id", "#t_ang2" + "-" + i);
  
   var right_a = (y1 - right_y)/(x1 - right_x);
@@ -310,17 +343,18 @@ function handleMouseOver(d, i) {  // Add interactivity
   var R_2 = Math.pow(left_x-x1,2)+Math.pow(left_y-y1,2);
 
   var selected = points_data.filter(
-    d => Math.pow((ratio*scales.x(d.coords[0]) - x1),2) + Math.pow((scales.y(d.coords[1]) - y1),2) < R_2 && (
-         right_a * ratio*scales.x(d.coords[0]) + right_b >  scales.y(d.coords[1]) && left_a * ratio*scales.x(d.coords[0]) + left_b <= scales.y(d.coords[1]) && right_a < 0 && left_a < 0 && ratio*scales.x(d.coords[0]) > x1 && left_x < right_x ||
-         right_a * ratio*scales.x(d.coords[0]) + right_b <= scales.y(d.coords[1]) && left_a * ratio*scales.x(d.coords[0]) + left_b >  scales.y(d.coords[1]) && right_a > 0 && left_a > 0 && left_x < right_x ||
-         right_a * ratio*scales.x(d.coords[0]) + right_b <= scales.y(d.coords[1]) && left_a * ratio*scales.x(d.coords[0]) + left_b <= scales.y(d.coords[1]) && right_a < 0 && left_a > 0 && scales.y(d.coords[1]) > y1 && left_x > right_x || 
-         right_a * ratio*scales.x(d.coords[0]) + right_b >  scales.y(d.coords[1]) && left_a * ratio*scales.x(d.coords[0]) + left_b >  scales.y(d.coords[1]) && right_a < 0 && left_a > 0 && scales.y(d.coords[1]) < y1 && left_x < right_x || 
-         right_a * ratio*scales.x(d.coords[0]) + right_b >  scales.y(d.coords[1]) && left_a * ratio*scales.x(d.coords[0]) + left_b <= scales.y(d.coords[1]) && right_a > 0 && left_a > 0 && ratio*scales.x(d.coords[0]) > x1 && left_x > right_x ||
-         right_a * ratio*scales.x(d.coords[0]) + right_b <= scales.y(d.coords[1]) && left_a * ratio*scales.x(d.coords[0]) + left_b >  scales.y(d.coords[1]) && right_a < 0 && left_a < 0 && left_x > right_x ||
-         right_a * ratio*scales.x(d.coords[0]) + right_b <= scales.y(d.coords[1]) && left_a * ratio*scales.x(d.coords[0]) + left_b >  scales.y(d.coords[1]) && right_a > 0 && left_a < 0 && left_x < x1   || 
-         right_a * ratio*scales.x(d.coords[0]) + right_b >  scales.y(d.coords[1]) && left_a * ratio*scales.x(d.coords[0]) + left_b <= scales.y(d.coords[1]) && right_a > 0 && left_a < 0 && left_x > x1 )
+    d => Math.pow((scales.x(d.coords[0]) - x1),2) + Math.pow((scales.y(d.coords[1]) - y1),2) < R_2 && (
+         right_a * scales.x(d.coords[0]) + right_b >  scales.y(d.coords[1]) && left_a * scales.x(d.coords[0]) + left_b <= scales.y(d.coords[1]) && right_a < 0 && left_a < 0 && scales.x(d.coords[0]) > x1 && left_x < right_x ||
+         right_a * scales.x(d.coords[0]) + right_b <= scales.y(d.coords[1]) && left_a * scales.x(d.coords[0]) + left_b >  scales.y(d.coords[1]) && right_a > 0 && left_a > 0 && left_x < right_x ||
+         right_a * scales.x(d.coords[0]) + right_b <= scales.y(d.coords[1]) && left_a * scales.x(d.coords[0]) + left_b <= scales.y(d.coords[1]) && right_a < 0 && left_a > 0 && scales.y(d.coords[1]) > y1 && left_x > right_x || 
+         right_a * scales.x(d.coords[0]) + right_b >  scales.y(d.coords[1]) && left_a * scales.x(d.coords[0]) + left_b >  scales.y(d.coords[1]) && right_a < 0 && left_a > 0 && scales.y(d.coords[1]) < y1 && left_x < right_x || 
+         right_a * scales.x(d.coords[0]) + right_b >  scales.y(d.coords[1]) && left_a * scales.x(d.coords[0]) + left_b <= scales.y(d.coords[1]) && right_a > 0 && left_a > 0 && scales.x(d.coords[0]) > x1 && left_x > right_x ||
+         right_a * scales.x(d.coords[0]) + right_b <= scales.y(d.coords[1]) && left_a * scales.x(d.coords[0]) + left_b >  scales.y(d.coords[1]) && right_a < 0 && left_a < 0 && left_x > right_x ||
+         right_a * scales.x(d.coords[0]) + right_b <= scales.y(d.coords[1]) && left_a * scales.x(d.coords[0]) + left_b >  scales.y(d.coords[1]) && right_a > 0 && left_a < 0 && left_x < x1   || 
+         right_a * scales.x(d.coords[0]) + right_b >  scales.y(d.coords[1]) && left_a * scales.x(d.coords[0]) + left_b <= scales.y(d.coords[1]) && right_a > 0 && left_a < 0 && left_x > x1 )
   );
 
+//  var sample = _.sample(selected, _.random(200));
 
   var mapped = selected.map((k) => k.id);
   Svg.selectAll("circle")
@@ -337,13 +371,10 @@ function handleMouseOver(d, i) {  // Add interactivity
          }
    }
 
-  function stand(x, min, max) {
-    return (x-min)/(max-min);
-  }
   
   Svg.selectAll("circle")
   .filter(function(d) { return d.class == checkedValue })
-  .attr("fill", (d) =>  scales.color(math.multiply([stand(d.coords[0],min_x, max_x),stand(d.coords[1],min_y, max_y)],[stand(d.gradient[0],min_g0, max_g0),stand(d.gradient[1],min_g1, max_g1)])))
+  .attr("fill", (d) =>  scales.color(math.multiply([coords[0],coords[1]],[d.gradient[0],d.gradient[1]])))
   .attr("r", 10); 
 
 
@@ -380,7 +411,7 @@ function handleMouseOut(d, i) {
       Svg.selectAll("circle")
       .filter(function(d) { return d.class != checkedValue })
       .attr("fill", "white")
-      .attr("r", 4);
+      .attr("r", 1);
 
 }
 

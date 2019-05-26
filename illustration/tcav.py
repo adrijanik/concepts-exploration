@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import torch
+import pandas as pd
+import numpy as np
 
 
 def mlp_jacobian(model, logits, h, y):
@@ -48,6 +50,43 @@ def concept_scores(jacobians, v):
     for i in range(len(jacobians)):
         S.append(np.dot(jacobians[i].numpy(), v))
     return np.vstack(S)
+
+
+def random_direction(J, N=100):
+    vs = []
+    for j in range(N):
+        v = np.random.normal(0, 1, J)
+        v /= np.sqrt(sum(v ** 2))
+        vs.append(v)
+
+    return vs
+
+
+def concept_pvalue(jacobians, v0, y):
+    yk = np.unique(y)
+    K = len(yk)
+
+    # get positive fraction for current direction
+    Sv0 = concept_scores(jacobians, v0)
+    props = (Sv0 > 0).mean(axis=0)
+
+    # get reference null distribution
+    vs = random_direction(len(v0))
+    Svs = concepts_scores(J, vs)
+    Svs.iloc[:, :K] = Svs.iloc[:, :K] > 0
+    ref_props = Svs.groupby("index").mean()
+    return dict((ref_props.iloc[:, :K] > props).mean())
+
+
+def concepts_pvalue(jacobians, vs, y):
+    pvals = []
+    for i, v in enumerate(vs):
+        print("testing {}".format(i))
+        pvals.append(
+            concept_pvalue(jacobians, v, y)
+        )
+
+    return pvals
 
 
 def concepts_scores(jacobians, vs):

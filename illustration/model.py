@@ -2,6 +2,7 @@
 import torch
 from torch.utils.data import Dataset
 from torch import nn
+import numpy as np
 
 
 class MLP(nn.Module):
